@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Panou Frizer">
+<meta name="theme-color" content="#121212">
+<title>Panou Frizer — Looks by Lucian Alecu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#121212; --card:#1c1c1c; --card2:#242424; --line:#333333;
+    --gold:#d4a843; --gold-dim:#8a6f2e; --text:#f2ede2; --muted:#9a9690;
+    --danger:#c9564f; --ok:#5f9e6e;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+  h1,h2,h3{font-family:'Fraunces',serif;margin:0;font-weight:600;}
+  .screen{display:none;min-height:100vh;flex-direction:column;}
+  .screen.active{display:flex;}
+  /* LOGIN */
+  #loginScreen{align-items:center;justify-content:center;padding:24px;}
+  .loginBox{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px 24px;}
+  .loginBox h1{font-size:22px;color:var(--gold);text-align:center;margin-bottom:22px;}
+  .frizerPick{display:flex;gap:10px;margin-bottom:20px;}
+  .frizerPick div{flex:1;padding:16px 8px;text-align:center;border:1px solid var(--line);border-radius:12px;cursor:pointer;font-weight:600;}
+  .frizerPick div.on{border-color:var(--gold);background:var(--card2);color:var(--gold);}
+  .pinDots{display:flex;justify-content:center;gap:14px;margin:20px 0;}
+  .pinDots div{width:14px;height:14px;border-radius:50%;border:1px solid var(--line);}
+  .pinDots div.fill{background:var(--gold);border-color:var(--gold);}
+  .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .keypad button{padding:16px;font-size:20px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--text);cursor:pointer;font-family:'Inter',sans-serif;}
+  .keypad button:active{background:var(--gold-dim);}
+  .err{color:var(--danger);font-size:13px;margin-top:10px;min-height:16px;text-align:center;}
+  /* APP */
+  header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:10;}
+  header h2{font-size:18px;color:var(--gold);}
+  header .logout{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;}
+  main{flex:1;padding:16px;padding-bottom:80px;}
+  .statsRow{display:flex;gap:10px;margin-bottom:16px;}
+  .statCard{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;}
+  .statCard .num{font-family:'Fraunces',serif;font-size:22px;color:var(--gold);}
+  .statCard .lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+  .calNav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .calNav button{background:var(--card2);border:1px solid var(--line);color:var(--text);width:36px;height:36px;border-radius:10px;font-size:16px;cursor:pointer;}
+  .calNav .lunaTxt{font-weight:700;font-size:15px;text-transform:capitalize;}
+  .calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:18px;}
+  .calGrid .dow{text-align:center;font-size:11px;color:var(--muted);padding-bottom:4px;}
+  .calGrid .day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;font-size:13px;cursor:pointer;position:relative;border:1px solid transparent;}
+  .calGrid .day.empty{visibility:hidden;}
+  .calGrid .day.today{border-color:var(--gold-dim);}
+  .calGrid .day.selected{background:var(--gold);color:#1a1a1a;font-weight:700;}
+  .calGrid .day.closed{color:#555;}
+  .calGrid .day .dot{width:5px;height:5px;border-radius:50%;background:var(--gold);margin-top:2px;}
+  .calGrid .day.selected .dot{background:#1a1a1a;}
+  .dayHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .dayHeader h3{color:var(--gold);font-size:16px;}
+  .addBtn{background:var(--gold);color:#1a1a1a;border:none;padding:9px 14px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;}
+  .apptItem{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;background:var(--card);}
+  .apptItem .top{display:flex;justify-content:space-between;align-items:flex-start;}
+  .apptItem .ora{font-weight:700;font-size:16px;color:var(--gold);}
+  .apptItem .status{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:700;text-transform:uppercase;}
+  .status.activa{background:rgba(212,168,67,0.15);color:var(--gold);}
+  .status.finalizata{background:rgba(95,158,110,0.15);color:var(--ok);}
+  .status.anulata{background:rgba(201,86,79,0.15);color:var(--danger);}
+  .apptItem .nume{font-weight:600;margin-top:6px;}
+  .apptItem .det{color:var(--muted);font-size:13px;margin-top:4px;line-height:1.5;}
+  .apptItem .tel a{color:var(--muted);text-decoration:none;}
+  .apptItem .actions{display:flex;gap:8px;margin-top:12px;}
+  .apptItem .actions button{flex:1;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--text);font-size:13px;cursor:pointer;font-weight:600;}
+  .apptItem .actions button.fin{border-color:var(--ok);color:var(--ok);}
+  .apptItem .actions button.can{border-color:var(--danger);color:var(--danger);}
+  .empty{color:var(--muted);text-align:center;padding:30px 10px;font-size:14px;}
+  .modalBg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;align-items:flex-end;justify-content:center;}
+  .modalBg.active{display:flex;}
+  .modalBox{background:var(--card);border-radius:18px 18px 0 0;padding:24px 22px 30px;width:100%;max-width:420px;max-height:88vh;overflow-y:auto;}
+  .modalBox h3{color:var(--gold);margin-bottom:16px;}
+  label{display:block;font-size:12px;color:var(--muted);margin:12px 0 6px;}
+  input,select{width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--text);font-size:14px;font-family:'Inter',sans-serif;}
+  .servChk{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-top:8px;cursor:pointer;}
+  .servChk.on{border-color:var(--gold);background:var(--card2);}
+  .btn{margin-top:18px;width:100%;padding:13px;border:none;border-radius:10px;background:var(--gold);color:#1a1a1a;font-weight:700;font-size:15px;cursor:pointer;}
+  .btn.secondary{background:transparent;border:1px solid var(--line);color:var(--text);margin-top:8px;}
+  .spinner{border:2px solid var(--line);border-top:2px solid var(--gold);border-radius:50%;width:16px;height:16px;animation:spin 0.7s linear infinite;display:inline-block;vertical-align:middle;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="screen active">
+  <div class="loginBox">
+    <h1>Panou Frizer</h1>
+    <div class="frizerPick" id="frizerPick"></div>
+    <div class="pinDots" id="pinDots"></div>
+    <div class="keypad" id="keypad"></div>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="appScreen" class="screen">
+  <header>
+    <h2 id="headerNume">Panou</h2>
+    <div style="display:flex;gap:14px;align-items:center;">
+      <button class="logout" onclick="deschideSchimbaPin()">Schimbă codul</button>
+      <button class="logout" onclick="doLogout()">Ieși</button>
+    </div>
+  </header>
+  <main>
+    <div class="statsRow">
+      <div class="statCard"><div class="num" id="statNr">0</div><div class="lbl">programări azi</div></div>
+      <div class="statCard"><div class="num" id="statVenit">0</div><div class="lbl">RON preconizat azi</div></div>
+      <div class="statCard"><div class="num" id="statVenitLuna">0</div><div class="lbl">RON preconizat luna</div></div>
+    </div>
+
+    <div class="calNav">
+      <button onclick="schimbaLuna(-1)">‹</button>
+      <div class="lunaTxt" id="lunaTxt"></div>
+      <button onclick="schimbaLuna(1)">›</button>
+    </div>
+    <div class="calGrid" id="calGrid"></div>
+
+    <div class="dayHeader">
+      <h3 id="ziuaSelTxt"></h3>
+      <button class="addBtn" onclick="deschideAdauga()">+ Programare</button>
+    </div>
+    <div id="listaZi"></div>
+  </main>
+</div>
+
+<!-- MODAL ADAUGA -->
+<div class="modalBg" id="addModal">
+  <div class="modalBox">
+    <h3>Programare nouă</h3>
+    <label>Nume client</label>
+    <input type="text" id="addNume" placeholder="Popescu Ion">
+    <label>Telefon</label>
+    <input type="tel" id="addTel" placeholder="07xxxxxxxx">
+    <label>Ora</label>
+    <input type="time" id="addOra">
+    <label>Servicii</label>
+    <div id="addServicii"></div>
+    <button class="btn" onclick="salveazaAdaugare()">Salvează programarea</button>
+    <button class="btn secondary" onclick="inchideAdauga()">Renunță</button>
+    <div class="err" id="addErr"></div>
+  </div>
+</div>
+
+<!-- MODAL EDITARE -->
+<div class="modalBg" id="editModal">
+  <div class="modalBox">
+    <h3>Modifică programarea</h3>
+    <label>Nume client</label>
+    <input type="text" id="editNume">
+    <label>Telefon</label>
+    <input type="tel" id="editTel">
+    <label>Data</label>
+    <input type="date" id="editData">
+    <label>Ora</label>
+    <input type="time" id="editOra">
+    <label>Servicii</label>
+    <div id="editServicii"></div>
+    <button class="btn" onclick="salveazaEditare()">Salvează modificările</button>
+    <button class="btn secondary" onclick="inchideEditare()">Renunță</button>
+    <div class="err" id="editErr"></div>
+  </div>
+</div>
+
+<!-- MODAL SCHIMBA PIN -->
+<div class="modalBg" id="pinModal">
+  <div class="modalBox">
+    <h3>Schimbă codul PIN</h3>
+    <label>Cod actual</label>
+    <input type="password" inputmode="numeric" maxlength="4" id="pinVechi" placeholder="••••">
+    <label>Cod nou (4 cifre)</label>
+    <input type="password" inputmode="numeric" maxlength="4" id="pinNou1" placeholder="••••">
+    <label>Confirmă codul nou</label>
+    <input type="password" inputmode="numeric" maxlength="4" id="pinNou2" placeholder="••••">
+    <button class="btn" onclick="salveazaPinNou()">Salvează codul nou</button>
+    <button class="btn secondary" onclick="inchideSchimbaPin()">Renunță</button>
+    <div class="err" id="pinErr"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAF-7h6_G5rz9wcyliSBF1ag7HqJu2zhNc",
+  authDomain: "baby-white-noise-bc63d.firebaseapp.com",
+  databaseURL: "https://baby-white-noise-bc63d.firebaseio.com",
+  projectId: "baby-white-noise-bc63d",
+  storageBucket: "baby-white-noise-bc63d.firebasestorage.app",
+  messagingSenderId: "114240488049",
+  appId: "1:114240488049:web:64fba858033092e775d1d0",
+  measurementId: "G-7G3KKEFNQX"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ---------- CONFIG ----------
+const FRIZERI = {
+  lucian: { nume: "Lucian Alecu" },
+  teodor: { nume: "Teodor" }
+};
+// Coduri PIN implicite, folosite doar dacă nu a fost salvat încă unul în baza de date
+const DEFAULT_PINS = { lucian: "1234", teodor: "5678" };
+let PINURI = Object.assign({}, DEFAULT_PINS); // se suprascrie din DB la încărcare
+const SERVICII = [
+  { id:"tuns", nume:"Tuns", durata:30, pret:50 },
+  { id:"tuns_barba", nume:"Tuns+Barbă", durata:45, pret:70 },
+  { id:"tuns_spalat", nume:"Tuns+Spălat", durata:45, pret:65 },
+  { id:"tuns_barba_spalat", nume:"Tuns+Barbă+Spălat", durata:60, pret:85 },
+  { id:"tuns_barba_scurt", nume:"Tuns Barbă", durata:15, pret:35 }
+];
+const PROGRAM = {
+  0: {start:"09:00", end:"17:00"},
+  1: null,
+  2: {start:"09:00", end:"20:30"},
+  3: {start:"09:00", end:"20:30"},
+  4: {start:"09:00", end:"20:30"},
+  5: {start:"09:00", end:"20:30"},
+  6: {start:"09:00", end:"20:30"}
+};
+
+// ---------- LOGIN STATE ----------
+let pickedFrizer = null;
+let pinBuf = '';
+const SESSION_KEY = 'frizer_session_v1';
+
+function renderFrizerPick(){
+  const wrap = document.getElementById('frizerPick');
+  wrap.innerHTML = '';
+  Object.keys(FRIZERI).forEach(id => {
+    const d = document.createElement('div');
+    d.textContent = FRIZERI[id].nume;
+    d.className = pickedFrizer===id ? 'on' : '';
+    d.onclick = () => { pickedFrizer = id; pinBuf=''; renderFrizerPick(); renderPinDots(); document.getElementById('loginErr').textContent=''; };
+    wrap.appendChild(d);
+  });
+}
+function renderPinDots(){
+  const wrap = document.getElementById('pinDots');
+  wrap.innerHTML = '';
+  for(let i=0;i<4;i++){
+    const d = document.createElement('div');
+    if(i < pinBuf.length) d.className = 'fill';
+    wrap.appendChild(d);
+  }
+}
+function renderKeypad(){
+  const wrap = document.getElementById('keypad');
+  wrap.innerHTML = '';
+  const keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
+  keys.forEach(k => {
+    const b = document.createElement('button');
+    b.textContent = k;
+    if(k==='') { b.style.visibility='hidden'; }
+    else {
+      b.onclick = () => {
+        if(!pickedFrizer){ document.getElementById('loginErr').textContent = 'Alege-ți numele mai întâi.'; return; }
+        if(k==='⌫'){ pinBuf = pinBuf.slice(0,-1); }
+        else if(pinBuf.length < 4){ pinBuf += k; }
+        renderPinDots();
+        if(pinBuf.length===4) verificaPin();
+      };
+    }
+    wrap.appendChild(b);
+  });
+}
+function verificaPin(){
+  if(pinBuf === PINURI[pickedFrizer]){
+    localStorage.setItem(SESSION_KEY, pickedFrizer);
+    intraInPanou(pickedFrizer);
+  } else {
+    document.getElementById('loginErr').textContent = 'Cod incorect.';
+    pinBuf = '';
+    renderPinDots();
+  }
+}
+function doLogout(){
+  localStorage.removeItem(SESSION_KEY);
+  document.getElementById('appScreen').classList.remove('active');
+  document.getElementById('loginScreen').classList.add('active');
+  pickedFrizer = null; pinBuf = '';
+  renderFrizerPick(); renderPinDots();
+}
+
+// incarcam codurile PIN curente din baza de date (daca exista), apoi pornim ecranul de login
+db.ref('frizeriConfig').once('value').then(snap => {
+  const val = snap.val() || {};
+  Object.keys(FRIZERI).forEach(id => {
+    if(val[id] && val[id].pin) PINURI[id] = val[id].pin;
+  });
+  renderFrizerPick(); renderPinDots(); renderKeypad();
+
+  const sesiuneSalvata = localStorage.getItem(SESSION_KEY);
+  if(sesiuneSalvata && FRIZERI[sesiuneSalvata]){
+    intraInPanou(sesiuneSalvata);
+  }
+});
+
+// ---------- SCHIMBARE COD PIN ----------
+function deschideSchimbaPin(){
+  document.getElementById('pinVechi').value = '';
+  document.getElementById('pinNou1').value = '';
+  document.getElementById('pinNou2').value = '';
+  document.getElementById('pinErr').textContent = '';
+  document.getElementById('pinModal').classList.add('active');
+}
+function inchideSchimbaPin(){ document.getElementById('pinModal').classList.remove('active'); }
+function salveazaPinNou(){
+  const vechi = document.getElementById('pinVechi').value.trim();
+  const nou1 = document.getElementById('pinNou1').value.trim();
+  const nou2 = document.getElementById('pinNou2').value.trim();
+  const errEl = document.getElementById('pinErr');
+  if(vechi !== PINURI[frizerActiv]){ errEl.textContent = 'Codul actual este greșit.'; return; }
+  if(!/^\d{4}$/.test(nou1)){ errEl.textContent = 'Codul nou trebuie să aibă exact 4 cifre.'; return; }
+  if(nou1 !== nou2){ errEl.textContent = 'Codurile noi nu coincid.'; return; }
+  db.ref('frizeriConfig/' + frizerActiv + '/pin').set(nou1).then(() => {
+    PINURI[frizerActiv] = nou1;
+    inchideSchimbaPin();
+  }).catch(e => { errEl.textContent = 'Eroare: ' + e.message; });
+}
+
+let frizerActiv = null;
+let lunaCurenta = new Date();
+let ziuaSel = ymd(new Date());
+let apptListener = null;
+
+function intraInPanou(id){
+  frizerActiv = id;
+  document.getElementById('loginScreen').classList.remove('active');
+  document.getElementById('appScreen').classList.add('active');
+  document.getElementById('headerNume').textContent = FRIZERI[id].nume;
+  renderCalendar();
+  ascultaZi(ziuaSel);
+}
+
+function ymd(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+
+function schimbaLuna(delta){
+  lunaCurenta = new Date(lunaCurenta.getFullYear(), lunaCurenta.getMonth()+delta, 1);
+  renderCalendar();
+}
+
+function renderCalendar(){
+  const luni = ['ianuarie','februarie','martie','aprilie','mai','iunie','iulie','august','septembrie','octombrie','noiembrie','decembrie'];
+  document.getElementById('lunaTxt').textContent = luni[lunaCurenta.getMonth()] + ' ' + lunaCurenta.getFullYear();
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  ['D','L','M','M','J','V','S'].forEach(z => {
+    const el = document.createElement('div'); el.className='dow'; el.textContent=z; grid.appendChild(el);
+  });
+  const primaZi = new Date(lunaCurenta.getFullYear(), lunaCurenta.getMonth(), 1);
+  const nrZile = new Date(lunaCurenta.getFullYear(), lunaCurenta.getMonth()+1, 0).getDate();
+  const offset = primaZi.getDay();
+  const azi = ymd(new Date());
+
+  for(let i=0;i<offset;i++){ const e=document.createElement('div'); e.className='day empty'; grid.appendChild(e); }
+
+  // fetch appointment counts for the month to show dots
+  db.ref('programari/' + frizerActiv).orderByChild('data')
+    .startAt(ymd(new Date(lunaCurenta.getFullYear(), lunaCurenta.getMonth(),1)))
+    .endAt(ymd(new Date(lunaCurenta.getFullYear(), lunaCurenta.getMonth()+1,0)))
+    .once('value').then(snap => {
+      const countByDay = {};
+      let venitLuna = 0;
+      snap.forEach(c => {
+        const v = c.val();
+        if(v.status !== 'anulata'){
+          countByDay[v.data] = (countByDay[v.data]||0)+1;
+          venitLuna += (v.pretTotal||0);
+        }
+      });
+      document.getElementById('statVenitLuna').textContent = venitLuna;
+      for(let d=1; d<=nrZile; d++){
+        const dateObj = new Date(lunaCurenta.getFullYear(), lunaCurenta.getMonth(), d);
+        const dstr = ymd(dateObj);
+        const el = document.createElement('div');
+        const inchis = PROGRAM[dateObj.getDay()] === null;
+        el.className = 'day' + (inchis ? ' closed' : '') + (dstr===azi ? ' today' : '') + (dstr===ziuaSel ? ' selected' : '');
+        el.innerHTML = d + (countByDay[dstr] ? '<div class="dot"></div>' : '');
+        el.onclick = () => { ziuaSel = dstr; renderCalendar(); ascultaZi(dstr); };
+        grid.appendChild(el);
+      }
+    });
+}
+
+function formatDataRo(dstr){
+  const zile = ['Duminică','Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă'];
+  const luni = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','noi','dec'];
+  const d = new Date(dstr + 'T00:00:00');
+  return zile[d.getDay()] + ', ' + d.getDate() + ' ' + luni[d.getMonth()];
+}
+
+function ascultaZi(dstr){
+  document.getElementById('ziuaSelTxt').textContent = formatDataRo(dstr);
+  if(apptListener) apptListener.off();
+  const ref = db.ref('programari/' + frizerActiv).orderByChild('data').equalTo(dstr);
+  apptListener = ref;
+  ref.on('value', snap => {
+    const items = [];
+    snap.forEach(c => items.push(Object.assign({apptId:c.key}, c.val())));
+    items.sort((a,b) => a.oraStart.localeCompare(b.oraStart));
+    renderListaZi(items);
+    const active = items.filter(i => i.status !== 'anulata');
+    document.getElementById('statNr').textContent = active.length;
+    document.getElementById('statVenit').textContent = active.reduce((a,i)=>a+(i.pretTotal||0),0);
+  });
+}
+
+function renderListaZi(items){
+  const wrap = document.getElementById('listaZi');
+  if(items.length===0){ wrap.innerHTML = '<div class="empty">Nicio programare în această zi.</div>'; return; }
+  wrap.innerHTML = '';
+  items.forEach(it => {
+    const div = document.createElement('div');
+    div.className = 'apptItem';
+    div.innerHTML = `
+      <div class="top">
+        <div class="ora">${it.oraStart} - ${it.oraEnd}</div>
+        <div class="status ${it.status}">${it.status}</div>
+      </div>
+      <div class="nume">${it.nume || '—'}</div>
+      <div class="det tel">${it.telefon ? `<a href="tel:${it.telefon}">${it.telefon}</a>` : ''}</div>
+      <div class="det">${(it.servicii||[]).map(s=>s.nume).join(', ')} · ${it.pretTotal} RON</div>
+      ${it.status==='activa' ? `<div class="actions">
+        <button onclick='deschideEditare(${JSON.stringify(it).replace(/'/g,"&#39;")})'>Modifică</button>
+        <button class="fin" onclick="schimbaStatus('${it.apptId}','${it.uid||''}','finalizata')">Finalizează</button>
+        <button class="can" onclick="schimbaStatus('${it.apptId}','${it.uid||''}','anulata')">Anulează</button>
+      </div>` : ''}
+    `;
+    wrap.appendChild(div);
+  });
+}
+
+function schimbaStatus(apptId, uid, statusNou){
+  const updates = {};
+  updates['programari/' + frizerActiv + '/' + apptId + '/status'] = statusNou;
+  if(uid) updates['programariClienti/' + uid + '/' + apptId + '/status'] = statusNou;
+  db.ref().update(updates);
+}
+
+// ---------- ADAUGARE MANUALA ----------
+let addSelServicii = new Set();
+function deschideAdauga(){
+  document.getElementById('addNume').value = '';
+  document.getElementById('addTel').value = '';
+  document.getElementById('addOra').value = '';
+  document.getElementById('addErr').textContent = '';
+  addSelServicii.clear();
+  renderAddServicii();
+  document.getElementById('addModal').classList.add('active');
+}
+function inchideAdauga(){ document.getElementById('addModal').classList.remove('active'); }
+function renderAddServicii(){
+  const wrap = document.getElementById('addServicii');
+  wrap.innerHTML = '';
+  SERVICII.forEach(s => {
+    const d = document.createElement('div');
+    d.className = 'servChk' + (addSelServicii.has(s.id)?' on':'');
+    d.innerHTML = `<span>${s.nume} (${s.durata} min)</span><b>${s.pret} RON</b>`;
+    d.onclick = () => { addSelServicii.has(s.id) ? addSelServicii.delete(s.id) : addSelServicii.add(s.id); renderAddServicii(); };
+    wrap.appendChild(d);
+  });
+}
+function salveazaAdaugare(){
+  const nume = document.getElementById('addNume').value.trim();
+  const tel = document.getElementById('addTel').value.trim();
+  const ora = document.getElementById('addOra').value;
+  const errEl = document.getElementById('addErr');
+  if(!nume || !ora || addSelServicii.size===0){ errEl.textContent = 'Completează numele, ora și cel puțin un serviciu.'; return; }
+  const arr = SERVICII.filter(s => addSelServicii.has(s.id));
+  const durataTotal = arr.reduce((a,s)=>a+s.durata,0);
+  const pretTotal = arr.reduce((a,s)=>a+s.pret,0);
+  const [h,m] = ora.split(':').map(Number);
+  const endMin = h*60+m+durataTotal;
+  const oraEnd = String(Math.floor(endMin/60)).padStart(2,'0') + ':' + String(endMin%60).padStart(2,'0');
+
+  const data = {
+    uid: null, nume, telefon: tel,
+    servicii: arr.map(s=>({nume:s.nume, durata:s.durata, pret:s.pret})),
+    durataTotal, pretTotal,
+    data: ziuaSel, oraStart: ora, oraEnd,
+    status: 'activa', creatLa: firebase.database.ServerValue.TIMESTAMP
+  };
+  db.ref('programari/' + frizerActiv).push(data).then(() => {
+    inchideAdauga();
+  }).catch(e => { errEl.textContent = 'Eroare: ' + e.message; });
+}
+
+// ---------- EDITARE PROGRAMARE ----------
+let editSelServicii = new Set();
+let editingAppt = null; // {apptId, uid, telefonOriginal}
+
+function deschideEditare(appt){
+  editingAppt = { apptId: appt.apptId, uid: appt.uid || null, telefonOriginal: appt.telefon || '' };
+  document.getElementById('editNume').value = appt.nume || '';
+  document.getElementById('editTel').value = appt.telefon || '';
+  document.getElementById('editData').value = appt.data;
+  document.getElementById('editOra').value = appt.oraStart;
+  editSelServicii.clear();
+  (appt.servicii||[]).forEach(s => {
+    const match = SERVICII.find(x => x.id===s.id || x.nume===s.nume);
+    if(match) editSelServicii.add(match.id);
+  });
+  document.getElementById('editErr').textContent = '';
+  renderEditServicii();
+  document.getElementById('editModal').classList.add('active');
+}
+function inchideEditare(){ document.getElementById('editModal').classList.remove('active'); editingAppt = null; }
+function renderEditServicii(){
+  const wrap = document.getElementById('editServicii');
+  wrap.innerHTML = '';
+  SERVICII.forEach(s => {
+    const d = document.createElement('div');
+    d.className = 'servChk' + (editSelServicii.has(s.id)?' on':'');
+    d.innerHTML = `<span>${s.nume} (${s.durata} min)</span><b>${s.pret} RON</b>`;
+    d.onclick = () => { editSelServicii.has(s.id) ? editSelServicii.delete(s.id) : editSelServicii.add(s.id); renderEditServicii(); };
+    wrap.appendChild(d);
+  });
+}
+
+function salveazaEditare(){
+  if(!editingAppt) return;
+  const nume = document.getElementById('editNume').value.trim();
+  const tel = document.getElementById('editTel').value.trim();
+  const dataNoua = document.getElementById('editData').value;
+  const ora = document.getElementById('editOra').value;
+  const errEl = document.getElementById('editErr');
+  if(!nume || !dataNoua || !ora || editSelServicii.size===0){ errEl.textContent = 'Completează numele, data, ora și cel puțin un serviciu.'; return; }
+
+  const arr = SERVICII.filter(s => editSelServicii.has(s.id));
+  const durataTotal = arr.reduce((a,s)=>a+s.durata,0);
+  const pretTotal = arr.reduce((a,s)=>a+s.pret,0);
+  const [h,m] = ora.split(':').map(Number);
+  const endMin = h*60+m+durataTotal;
+  const oraEnd = String(Math.floor(endMin/60)).padStart(2,'0') + ':' + String(endMin%60).padStart(2,'0');
+
+  finalizeazaSalvareEditare(nume, tel, dataNoua, ora, oraEnd, arr, durataTotal, pretTotal, errEl);
+}
+
+function finalizeazaSalvareEditare(nume, tel, dataNoua, ora, oraEnd, arr, durataTotal, pretTotal, errEl){
+  // verifica suprapuneri cu alte programari active ale aceluiasi frizer, in aceeasi zi, excluzand programarea curenta
+  db.ref('programari/' + frizerActiv).orderByChild('data').equalTo(dataNoua).once('value').then(snap => {
+    const startNou = toMinE(ora), endNou = toMinE(oraEnd);
+    let suprapune = false;
+    snap.forEach(c => {
+      if(c.key === editingAppt.apptId) return;
+      const v = c.val();
+      if(v.status === 'anulata') return;
+      const os = toMinE(v.oraStart), oe = toMinE(v.oraEnd);
+      if(startNou < oe && endNou > os) suprapune = true;
+    });
+    if(suprapune && !confirm('Se suprapune cu o altă programare activă în acea zi. Salvezi oricum?')) return;
+
+    // telefonul s-a schimbat => se considera alt client, se detaseaza de contul original
+    const telefonSchimbat = editingAppt.uid && tel !== editingAppt.telefonOriginal;
+    const uidNou = telefonSchimbat ? null : editingAppt.uid;
+
+    const updates = {};
+    const path = 'programari/' + frizerActiv + '/' + editingAppt.apptId;
+    updates[path + '/nume'] = nume;
+    updates[path + '/telefon'] = tel;
+    updates[path + '/data'] = dataNoua;
+    updates[path + '/oraStart'] = ora;
+    updates[path + '/oraEnd'] = oraEnd;
+    updates[path + '/servicii'] = arr.map(s => ({id:s.id, nume:s.nume, durata:s.durata, pret:s.pret}));
+    updates[path + '/durataTotal'] = durataTotal;
+    updates[path + '/pretTotal'] = pretTotal;
+    updates[path + '/uid'] = uidNou;
+
+    if(editingAppt.uid){
+      if(telefonSchimbat){
+        // scoatem programarea din contul clientului vechi
+        updates['programariClienti/' + editingAppt.uid + '/' + editingAppt.apptId] = null;
+      } else {
+        const mp = 'programariClienti/' + editingAppt.uid + '/' + editingAppt.apptId;
+        updates[mp + '/nume'] = nume;
+        updates[mp + '/telefon'] = tel;
+        updates[mp + '/data'] = dataNoua;
+        updates[mp + '/oraStart'] = ora;
+        updates[mp + '/oraEnd'] = oraEnd;
+        updates[mp + '/servicii'] = arr.map(s => ({id:s.id, nume:s.nume, durata:s.durata, pret:s.pret}));
+        updates[mp + '/durataTotal'] = durataTotal;
+        updates[mp + '/pretTotal'] = pretTotal;
+      }
+    }
+
+    db.ref().update(updates).then(() => {
+      inchideEditare();
+    }).catch(e => { errEl.textContent = 'Eroare: ' + e.message; });
+  });
+}
+
+function toMinE(hhmm){ const [h,m] = hhmm.split(':').map(Number); return h*60+m; }
+</script>
+</body>
+</html>
