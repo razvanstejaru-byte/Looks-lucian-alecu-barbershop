@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Looks by Lucian Alecu — Panou Frizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#121212;
+    --card:#1c1c1c;
+    --card2:#242424;
+    --line:#333333;
+    --gold:#d4a843;
+    --gold-dim:#8a6f2e;
+    --text:#f2ede2;
+    --muted:#9a9690;
+    --danger:#c9564f;
+    --ok:#5f9e6e;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+  h1,h2,h3{font-family:'Fraunces',serif;margin:0;font-weight:600;}
+  .screen{display:none;min-height:100vh;flex-direction:column;}
+  .screen.active{display:flex;}
+  #authScreen{align-items:center;justify-content:center;padding:24px;}
+  .authBox{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px 24px;}
+  .authBox h1{font-size:24px;color:var(--gold);text-align:center;}
+  .authBox p.sub{text-align:center;color:var(--muted);margin:6px 0 22px;font-size:13px;}
+  label{display:block;font-size:12px;color:var(--muted);margin:14px 0 6px;}
+  input,select{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--text);font-size:15px;font-family:'Inter',sans-serif;}
+  input:focus,select:focus{outline:none;border-color:var(--gold);}
+  .btn{margin-top:22px;width:100%;padding:13px;border:none;border-radius:10px;background:var(--gold);color:#1a1a1a;font-weight:700;font-size:15px;cursor:pointer;}
+  .btn:disabled{opacity:0.5;}
+  .err{color:var(--danger);font-size:13px;margin-top:10px;min-height:16px;}
+  header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:10;}
+  header h2{font-size:17px;color:var(--gold);}
+  header .logout{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;}
+  .navTabs{display:flex;border-bottom:1px solid var(--line);}
+  .navTabs button{flex:1;padding:13px 6px;background:none;border:none;color:var(--muted);font-weight:700;font-size:14px;cursor:pointer;border-bottom:2px solid transparent;}
+  .navTabs button.on{color:var(--gold);border-bottom-color:var(--gold);}
+  .filters{display:flex;gap:8px;padding:14px 18px 0;flex-wrap:wrap;}
+  .filters button{flex:1;min-width:80px;padding:10px 6px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;}
+  .filters button.on{background:var(--gold);color:#1a1a1a;border-color:var(--gold);}
+  .btnSterge{background:none;border:1px solid var(--line);color:var(--muted);}
+  .clientCard{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;background:var(--card);}
+  .clientCard .client{font-weight:700;font-size:15px;}
+  .clientCard .contact{color:var(--text);font-size:14px;margin-top:2px;}
+  .clientCard .contact a{color:var(--gold);text-decoration:none;}
+  .clientCard .habitRow{display:flex;justify-content:space-between;margin-top:10px;gap:10px;flex-wrap:wrap;}
+  .clientCard .habitBox{flex:1;min-width:100px;background:var(--card2);border-radius:10px;padding:8px 10px;}
+  .clientCard .habitBox .lbl{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.03em;}
+  .clientCard .habitBox .val{font-size:14px;font-weight:700;margin-top:2px;color:var(--gold);}
+  .dateRow{padding:12px 18px 0;}
+  main{flex:1;padding:16px 18px;padding-bottom:40px;}
+  .apptItem{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;background:var(--card);}
+  .apptItem .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .apptItem .ora{font-weight:700;font-size:17px;color:var(--gold);}
+  .apptItem .data2{color:var(--muted);font-size:12px;margin-top:2px;}
+  .apptItem .status{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:700;text-transform:uppercase;white-space:nowrap;}
+  .status.activa{background:rgba(212,168,67,0.15);color:var(--gold);}
+  .status.finalizata{background:rgba(95,158,110,0.15);color:var(--ok);}
+  .status.anulata{background:rgba(201,86,79,0.15);color:var(--danger);}
+  .apptItem .client{font-weight:700;font-size:15px;margin-top:10px;}
+  .apptItem .contact{color:var(--text);font-size:14px;margin-top:2px;}
+  .apptItem .contact a{color:var(--gold);text-decoration:none;}
+  .apptItem .det{color:var(--muted);font-size:13px;margin-top:8px;line-height:1.5;}
+  .apptItem .actions{display:flex;gap:8px;margin-top:12px;}
+  .apptItem .actions button{flex:1;padding:9px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;}
+  .btnFin{background:var(--ok);border:1px solid var(--ok);color:#0f1c12;}
+  .btnAnul{background:none;border:1px solid var(--danger);color:var(--danger);}
+  .empty{color:var(--muted);text-align:center;padding:30px 10px;font-size:14px;}
+  .spinner{border:2px solid var(--line);border-top:2px solid var(--gold);border-radius:50%;width:16px;height:16px;animation:spin 0.7s linear infinite;display:inline-block;vertical-align:middle;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .sectionTitle{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin:16px 0 8px;}
+</style>
+</head>
+<body>
+
+<!-- PIN SCREEN -->
+<div id="authScreen" class="screen active">
+  <div class="authBox">
+    <h1>Panou Frizer</h1>
+    <p class="sub">Looks by Lucian Alecu</p>
+    <label>Frizer</label>
+    <select id="pinFrizer"></select>
+    <label>Cod PIN</label>
+    <input type="password" id="pinInput" inputmode="numeric" maxlength="6" placeholder="••••">
+    <button class="btn" id="btnPin" onclick="verificaPin()">Intră</button>
+    <div class="err" id="pinErr"></div>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="appScreen" class="screen">
+  <header>
+    <h2 id="headerNume">Panou Frizer</h2>
+    <button class="logout" onclick="iesi()">Ieși</button>
+  </header>
+
+  <div class="navTabs">
+    <button id="tabNavProgramari" class="on" onclick="switchTab('programari')">Programări</button>
+    <button id="tabNavClienti" onclick="switchTab('clienti')">Clienți</button>
+  </div>
+
+  <div id="tabProgramari">
+    <div class="filters">
+      <button id="fAzi" class="on" onclick="setFiltru('azi')">Azi</button>
+      <button id="fViitor" onclick="setFiltru('viitor')">Viitoare</button>
+      <button id="fToate" onclick="setFiltru('toate')">Toate</button>
+    </div>
+    <div class="dateRow" id="dateRow" style="display:none;">
+      <input type="date" id="dataInput" onchange="incarcaProgramari()">
+    </div>
+    <main>
+      <div id="lista"></div>
+    </main>
+  </div>
+
+  <div id="tabClienti" style="display:none;">
+    <main>
+      <div id="listaClienti"></div>
+    </main>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAF-7h6_G5rz9wcyliSBF1ag7HqJu2zhNc",
+  authDomain: "baby-white-noise-bc63d.firebaseapp.com",
+  databaseURL: "https://baby-white-noise-bc63d.firebaseio.com",
+  projectId: "baby-white-noise-bc63d",
+  storageBucket: "baby-white-noise-bc63d.firebasestorage.app",
+  messagingSenderId: "114240488049",
+  appId: "1:114240488049:web:64fba858033092e775d1d0",
+  measurementId: "G-7G3KKEFNQX"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+// ---------- CONFIG SALON (trebuie sa fie identic cu client.html) ----------
+const FRIZERI = {
+  lucian: { nume: "Lucian Alecu", initiale: "LA", pin: "1234" },
+  teodor: { nume: "Teodor", initiale: "T", pin: "5678" }
+};
+
+// ---------- STATE ----------
+let selFrizer = null;
+let filtruCurent = 'azi';
+
+// ---------- PIN LOGIN ----------
+function populeazaSelect(){
+  const sel = document.getElementById('pinFrizer');
+  sel.innerHTML = '';
+  Object.keys(FRIZERI).forEach(id => {
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = FRIZERI[id].nume;
+    sel.appendChild(opt);
+  });
+}
+populeazaSelect();
+
+function verificaPin(){
+  const id = document.getElementById('pinFrizer').value;
+  const pin = document.getElementById('pinInput').value.trim();
+  const errEl = document.getElementById('pinErr');
+  errEl.textContent = '';
+  if(!pin){ errEl.textContent = 'Introdu codul PIN.'; return; }
+  if(FRIZERI[id].pin !== pin){ errEl.textContent = 'Cod PIN greșit.'; return; }
+  document.getElementById('btnPin').disabled = true;
+  auth.signInAnonymously()
+    .then(() => {
+      selFrizer = id;
+      sessionStorage.setItem('frizerSel', id);
+      afiseazaApp();
+    })
+    .catch(e => { errEl.textContent = 'Eroare conectare: ' + e.message; })
+    .finally(() => { document.getElementById('btnPin').disabled = false; });
+}
+
+function iesi(){
+  auth.signOut();
+  selFrizer = null;
+  sessionStorage.removeItem('frizerSel');
+  document.getElementById('appScreen').classList.remove('active');
+  document.getElementById('authScreen').classList.add('active');
+  document.getElementById('pinInput').value = '';
+}
+
+auth.onAuthStateChanged(user => {
+  if(user && sessionStorage.getItem('frizerSel')){
+    selFrizer = sessionStorage.getItem('frizerSel');
+    afiseazaApp();
+  } else if(!user){
+    document.getElementById('appScreen').classList.remove('active');
+    document.getElementById('authScreen').classList.add('active');
+  }
+});
+
+// ---------- APP UI ----------
+function afiseazaApp(){
+  document.getElementById('authScreen').classList.remove('active');
+  document.getElementById('appScreen').classList.add('active');
+  document.getElementById('headerNume').textContent = FRIZERI[selFrizer].nume;
+  const today = new Date();
+  document.getElementById('dataInput').value = ymd(today);
+  incarcaProgramari();
+}
+
+function switchTab(tab){
+  document.getElementById('tabNavProgramari').classList.toggle('on', tab==='programari');
+  document.getElementById('tabNavClienti').classList.toggle('on', tab==='clienti');
+  document.getElementById('tabProgramari').style.display = tab==='programari' ? 'block' : 'none';
+  document.getElementById('tabClienti').style.display = tab==='clienti' ? 'block' : 'none';
+  if(tab === 'clienti') incarcaClienti();
+}
+
+function setFiltru(f){
+  filtruCurent = f;
+  document.getElementById('fAzi').classList.toggle('on', f==='azi');
+  document.getElementById('fViitor').classList.toggle('on', f==='viitor');
+  document.getElementById('fToate').classList.toggle('on', f==='toate');
+  document.getElementById('dateRow').style.display = f==='alta' ? 'block' : 'none';
+  incarcaProgramari();
+}
+
+function ymd(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function incarcaProgramari(){
+  const wrap = document.getElementById('lista');
+  wrap.innerHTML = '<div class="empty"><span class="spinner"></span> Se încarcă programările...</div>';
+
+  db.ref('programari/' + selFrizer).once('value').then(snap => {
+    let items = [];
+    snap.forEach(c => items.push(Object.assign({apptId:c.key}, c.val())));
+
+    const today = ymd(new Date());
+    if(filtruCurent === 'azi'){
+      items = items.filter(it => it.data === today);
+    } else if(filtruCurent === 'viitor'){
+      items = items.filter(it => it.data >= today && it.status === 'activa');
+    }
+    // 'toate' = fara filtrare pe data
+
+    items.sort((a,b) => (a.data+a.oraStart).localeCompare(b.data+b.oraStart));
+
+    if(items.length === 0){
+      wrap.innerHTML = '<div class="empty">Nu există programări pentru acest filtru.</div>';
+      return;
+    }
+
+    wrap.innerHTML = '';
+    items.forEach(it => {
+      const div = document.createElement('div');
+      div.className = 'apptItem';
+      const poateModifica = it.status === 'activa';
+      div.innerHTML = `
+        <div class="top">
+          <div>
+            <div class="ora">${it.oraStart} - ${it.oraEnd}</div>
+            <div class="data2">${formatDataRo(it.data)}</div>
+          </div>
+          <div class="status ${it.status}">${it.status}</div>
+        </div>
+        <div class="client">${it.nume || 'Client necunoscut'}</div>
+        <div class="contact">📞 <a href="tel:${it.telefon}">${it.telefon || '-'}</a></div>
+        <div class="det">
+          Servicii: ${(it.servicii||[]).map(s=>s.nume).join(', ')}<br>
+          Total: ${it.pretTotal} RON · Durată: ${it.durataTotal} min
+        </div>
+        <div class="actions">
+          ${poateModifica ? `
+          <button class="btnFin" onclick="schimbaStatus('${it.apptId}','finalizata')">Finalizează</button>
+          <button class="btnAnul" onclick="schimbaStatus('${it.apptId}','anulata')">Anulează</button>
+          ` : ''}
+          <button class="btnSterge" onclick="stergeProgramare('${it.apptId}','${it.uid||''}')">Șterge</button>
+        </div>
+      `;
+      wrap.appendChild(div);
+    });
+  });
+}
+
+function schimbaStatus(apptId, statusNou){
+  if(statusNou === 'anulata' && !confirm('Sigur anulezi această programare?')) return;
+  const item_ref = 'programari/' + selFrizer + '/' + apptId;
+  db.ref(item_ref + '/uid').once('value').then(snapUid => {
+    const uid = snapUid.val();
+    const updates = {};
+    updates[item_ref + '/status'] = statusNou;
+    if(uid){
+      updates['programariClienti/' + uid + '/' + apptId + '/status'] = statusNou;
+    }
+    return db.ref().update(updates);
+  }).then(() => incarcaProgramari());
+}
+
+function stergeProgramare(apptId, uid){
+  if(!confirm('Ștergi definitiv această programare? Nu se poate reveni.')) return;
+  const updates = {};
+  updates['programari/' + selFrizer + '/' + apptId] = null;
+  if(uid){
+    updates['programariClienti/' + uid + '/' + apptId] = null;
+  }
+  db.ref().update(updates).then(() => incarcaProgramari());
+}
+
+// ---------- TAB CLIENTI (obiceiuri) ----------
+function incarcaClienti(){
+  const wrap = document.getElementById('listaClienti');
+  wrap.innerHTML = '<div class="empty"><span class="spinner"></span> Se calculează obiceiurile clienților...</div>';
+
+  db.ref('programari/' + selFrizer).once('value').then(snap => {
+    let items = [];
+    snap.forEach(c => items.push(Object.assign({apptId:c.key}, c.val())));
+    items = items.filter(it => it.status !== 'anulata');
+
+    // grupare dupa uid (sau telefon daca lipseste uid)
+    const grupuri = {};
+    items.forEach(it => {
+      const cheie = it.uid || it.telefon || it.nume || 'necunoscut';
+      if(!grupuri[cheie]) grupuri[cheie] = { nume: it.nume, telefon: it.telefon, datas: [] };
+      grupuri[cheie].datas.push(it.data);
+    });
+
+    let clienti = Object.values(grupuri).map(g => {
+      const datas = g.datas.slice().sort();
+      const nrVizite = datas.length;
+      let intervalMediu = null;
+      if(datas.length >= 2){
+        let sumeDiff = 0, nrDiff = 0;
+        for(let i=1; i<datas.length; i++){
+          const d1 = new Date(datas[i-1] + 'T00:00:00');
+          const d2 = new Date(datas[i] + 'T00:00:00');
+          const diffZile = Math.round((d2 - d1) / 86400000);
+          if(diffZile > 0){ sumeDiff += diffZile; nrDiff++; }
+        }
+        if(nrDiff > 0) intervalMediu = Math.round(sumeDiff / nrDiff);
+      }
+      return {
+        nume: g.nume, telefon: g.telefon, nrVizite,
+        primaData: datas[0], ultimaData: datas[datas.length-1],
+        intervalMediu
+      };
+    });
+
+    clienti.sort((a,b) => b.ultimaData.localeCompare(a.ultimaData));
+
+    if(clienti.length === 0){
+      wrap.innerHTML = '<div class="empty">Nu există încă date despre clienți.</div>';
+      return;
+    }
+
+    wrap.innerHTML = '';
+    clienti.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'clientCard';
+      div.innerHTML = `
+        <div class="client">${c.nume || 'Client necunoscut'}</div>
+        <div class="contact">📞 <a href="tel:${c.telefon}">${c.telefon || '-'}</a></div>
+        <div class="habitRow">
+          <div class="habitBox"><div class="lbl">Vizite</div><div class="val">${c.nrVizite}</div></div>
+          <div class="habitBox"><div class="lbl">Ultima</div><div class="val">${formatDataScurt(c.ultimaData)}</div></div>
+          <div class="habitBox"><div class="lbl">Obicei</div><div class="val">${c.intervalMediu ? 'la ~' + c.intervalMediu + ' zile' : '—'}</div></div>
+        </div>
+      `;
+      wrap.appendChild(div);
+    });
+  });
+}
+
+function formatDataScurt(dstr){
+  const luni = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','noi','dec'];
+  const d = new Date(dstr + 'T00:00:00');
+  return d.getDate() + ' ' + luni[d.getMonth()];
+}
+
+function formatDataRo(dstr){
+  const zile = ['Duminică','Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă'];
+  const luni = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','noi','dec'];
+  const d = new Date(dstr + 'T00:00:00');
+  return zile[d.getDay()] + ', ' + d.getDate() + ' ' + luni[d.getMonth()];
+}
+</script>
+</body>
+</html>
